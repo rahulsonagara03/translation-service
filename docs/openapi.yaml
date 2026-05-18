@@ -1,0 +1,149 @@
+openapi: 3.0.3
+info:
+  title: Translation Management Service API
+  version: 1.0.0
+servers:
+  - url: /api
+security:
+  - bearerAuth: []
+paths:
+  /auth/login:
+    post:
+      security: []
+      summary: Create a Sanctum bearer token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                device_name:
+                  type: string
+      responses:
+        "200":
+          description: Token issued.
+  /auth/logout:
+    post:
+      summary: Revoke the current token.
+      responses:
+        "200":
+          description: Logged out.
+  /translations:
+    get:
+      summary: Search translations.
+      parameters:
+        - in: query
+          name: locale
+          schema: { type: string, example: en }
+        - in: query
+          name: group
+          schema: { type: string, example: auth }
+        - in: query
+          name: key
+          schema: { type: string, example: login }
+        - in: query
+          name: content
+          schema: { type: string, example: "Sign in" }
+        - in: query
+          name: q
+          schema: { type: string }
+        - in: query
+          name: tags
+          schema: { type: string, example: "mobile,web" }
+        - in: query
+          name: tag_mode
+          schema: { type: string, enum: [all, any] }
+        - in: query
+          name: per_page
+          schema: { type: integer, maximum: 100 }
+      responses:
+        "200":
+          description: Paginated translation list.
+    post:
+      summary: Create a translation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TranslationPayload"
+      responses:
+        "201":
+          description: Created.
+  /translations/{id}:
+    get:
+      summary: View one translation.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: Translation resource.
+    patch:
+      summary: Update one translation.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TranslationPayload"
+      responses:
+        "200":
+          description: Updated.
+  /translations/export:
+    get:
+      summary: Stream current translations for frontend clients.
+      parameters:
+        - in: query
+          name: locale
+          schema: { type: string, example: en }
+        - in: query
+          name: tags
+          schema: { type: string, example: web }
+      responses:
+        "200":
+          description: Nested locale/group/key JSON export.
+        "304":
+          description: Not modified when ETag matches.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    TranslationPayload:
+      type: object
+      required: [locale, group, key, value]
+      properties:
+        locale:
+          type: string
+          example: en
+        group:
+          type: string
+          example: auth
+        key:
+          type: string
+          example: login.button
+        value:
+          type: string
+          example: "Log in"
+        tags:
+          type: array
+          items:
+            type: string
+          example: [web, mobile]
